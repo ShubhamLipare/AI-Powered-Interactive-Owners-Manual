@@ -6,4 +6,5 @@ langchain-core
 langchain-groq
 langchain-google-genai
 transformers
+pymupdf
 -e .
