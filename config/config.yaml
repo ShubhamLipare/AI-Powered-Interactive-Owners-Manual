@@ -2,8 +2,8 @@ faiss_db:
   collection_name: "owners_manual_collection"
 
 embedding_model:
-  provider: "google"
-  model_name: "Qwen/Qwen3-Embedding-0.6B"
+  provider: "fastembed"
+  model_name: "BAAI/bge-small-en-v1.5"
 
 retriever:
   top_k: 10

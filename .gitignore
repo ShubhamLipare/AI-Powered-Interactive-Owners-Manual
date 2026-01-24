@@ -8,6 +8,8 @@ __pycache__/
 
 #unnecessary folders
 data
+logs
+faiss_index
 # Distribution / packaging
 .Python
 build/

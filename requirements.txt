@@ -1,10 +1,22 @@
-ipykernel
-python-dotenv
-langchain
-langchain-community
-langchain-core
-langchain-groq
-langchain-google-genai
-transformers
-pymupdf
+# Core
+python-dotenv>=1.0.0
+ipykernel>=6.29.0
+
+# LangChain (PINNED for compatibility)
+langchain==0.2.14
+langchain-core==0.2.36
+langchain-community==0.2.12
+langchain-huggingface==0.0.3
+langchain-groq==0.1.9
+langchain-google-genai==1.0.8
+
+# Embeddings & NLP
+transformers>=4.44.0
+sentence-transformers>=3.0.1
+
+# PDF parsing
+pymupdf>=1.24.0
+fastembed
+faiss-cpu
+# Local project
 -e .
