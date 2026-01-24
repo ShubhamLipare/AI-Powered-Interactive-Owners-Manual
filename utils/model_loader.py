@@ -1,6 +1,7 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
+#from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_groq import ChatGroq
-from transformers import AutoTokenizer
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -52,9 +53,8 @@ class ModelLoader:
         try:
             embedding_block=self.config.get('embedding_model', {})
             model_name=embedding_block.get('model_name')
-            provider=embedding_block.get('provider')
-            log.info(f"Loading embedding model from provider: {provider}")
-            return AutoTokenizer.from_pretrained(model_name)
+            log.info(f"loading embedding model: {model_name}")
+            return  FastEmbedEmbeddings(model_name=model_name)
         except Exception as e:
             log.error(f"Error loading embedding model: {e}")
             raise CustomException(e)
