@@ -18,5 +18,9 @@ sentence-transformers>=3.0.1
 pymupdf>=1.24.0
 fastembed
 faiss-cpu
+fastapi
+streamlit
+uvicorn 
+python-multipart
 # Local project
 -e .

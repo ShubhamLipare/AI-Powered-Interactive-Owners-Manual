@@ -21,11 +21,24 @@ def generate_session_id(prefix: str = "session") -> str:
 
 def save_uploaded_file(uploaded_file, target_path: str) -> str:
     try:
+        log.info(f"Saving uploaded files to {target_path}")
         target_path.mkdir(parents=True, exist_ok=True)
         saved:List[Path] = []
         for uf in uploaded_file:
-            name=getattr(uf,"name","file")
-            ext=Path(name).suffix.lower()
+            log.info(f"Processing uploaded file: {uf}")
+            #Handle FastAPI UploadFile
+            if hasattr(uf, "filename"):
+                name = uf.filename
+                file_bytes = uf.file.read()
+            # Handle Streamlit UploadedFile / DummyFile
+            elif hasattr(uf, "name"):
+                name = uf.name
+                file_bytes = uf.getbuffer()
+            else:
+                raise CustomException("Unsupported uploaded file type")
+
+            ext = Path(name).suffix.lower()
+            log.info(f"File name : {name} , File extension: {ext}")
             if ext not in SUPPORTED_EXTENSIONS:
                 raise CustomException(f"Unsupported file extension: {ext}. Supported extensions are: {SUPPORTED_EXTENSIONS}")
             # Clean file name (only alphanum, dash, underscore)
@@ -33,10 +46,12 @@ def save_uploaded_file(uploaded_file, target_path: str) -> str:
             fname = f"{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
             out = target_path / fname
             with open(out, "wb") as f:
-                if hasattr(uf, "read"):
-                    f.write(uf.read())
-                else:
-                    f.write(uf.getbuffer())
+                f.write(file_bytes)
+            # with open(out, "wb") as f:
+            #     if hasattr(uf, "read"):
+            #         f.write(uf.read())
+            #     else:
+            #         f.write(uf.getbuffer())
             saved.append(out)
         log.info(f"Saved uploaded files: {saved}")
         return saved
@@ -47,6 +62,7 @@ def save_uploaded_file(uploaded_file, target_path: str) -> str:
 
 def load_document(folder_paths: List[Path], save_path: Path = None):
     try:
+        log.info(f"Loading documents from: {folder_paths}")
         docs = []
         for p in folder_paths:
             if p.is_file() and p.suffix.lower() == ".pdf":

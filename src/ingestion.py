@@ -42,6 +42,7 @@ class FaissManager:
     
 
     def load_or_create_index(self,documents):
+        log.info(f"Checking for existing FAISS index at {self.index_dir}")
         if self._exists():
             log.info("Loading existing FAISS index.")
             self.vectorestore=FAISS.load_local(str(self.index_dir), self.embedding_model,allow_dangerous_deserialization=True)
@@ -60,6 +61,8 @@ class FaissManager:
         return self.vectorestore
 
     def add_documents(self, documents):
+        log.info(f"Adding documents to FAISS index at {self.index_dir}")
+        log.info(f"documents to add: {len(documents)}")
         new_docs=[]
         if not self.vectorestore:
             raise CustomException("No FAISS index loaded.")
@@ -85,6 +88,7 @@ class DataIngestion:
 
     def chunk_and_store(self,documents,chunk_size,chunk_overlap):
         try:
+            log.info(f"Chunking documents for session {self.session_id} with chunk size {chunk_size} and overlap {chunk_overlap}.")
             chunked_docs_path = self.session_path / "chunked_docs"
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
@@ -105,6 +109,7 @@ class DataIngestion:
         
     def build_retriever(self,uploaded_files,chunk_size,chunk_overlap,k):
         try:
+            log.info(f"Starting retriever build for session {self.session_id} with {len(uploaded_files)} files.")
             saved_files = save_uploaded_file(uploaded_files, self.uploads_path)
             documents = load_document(saved_files, self.loaded_docs_path)
             chunks = self.chunk_and_store(documents, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
@@ -112,7 +117,7 @@ class DataIngestion:
             vs=fm.load_or_create_index(chunks)
             fm.add_documents(chunks)
             log.info(f"Retriever built successfully for session {self.session_id}.")
-            return vs.as_retriever(search_type="similarity", search_kwargs={"k":k})
+            #return vs.as_retriever(search_type="similarity", search_kwargs={"k":k})
         
         except CustomException as ce:
             log.error(f"Building retriever failed: {ce}")
