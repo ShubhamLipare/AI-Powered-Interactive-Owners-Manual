@@ -22,5 +22,6 @@ fastapi
 streamlit
 uvicorn 
 python-multipart
+sqlite3
 # Local project
 -e .

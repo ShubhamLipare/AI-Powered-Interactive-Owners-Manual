@@ -72,7 +72,9 @@ class ConversationRAG:
             if self.retriever is None:
                 raise CustomException("Retriever is not initialized.")
             question_rewritter= ({"user_query":itemgetter("user_query"),"conversation_history":itemgetter("conversation_history")} |self.query_enhancement_prompt | self.llm | StrOutputParser())
+            log.info(f"question rewritter:{question_rewritter}")
             retrieve_docs= question_rewritter | self.retriever | self._format_docs
+            log.info(f"retrieve_docs:{retrieve_docs}")
             self.chain= ({"user_query":itemgetter("user_query"),
                           "conversation_history":itemgetter("conversation_history"),
                           "retrieved_context":retrieve_docs}

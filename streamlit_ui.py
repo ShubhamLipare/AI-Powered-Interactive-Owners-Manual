@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import uuid
 
 BACKEND_URL = "http://localhost:8000"
 
@@ -8,9 +9,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# --------------------------------------------------
-# Helpers
-# --------------------------------------------------
 def set_page(page_name: str):
     st.query_params.clear()
     st.query_params["page"] = page_name
@@ -28,8 +26,12 @@ def get_page():
 if "retriever_ready" not in st.session_state:
     st.session_state.retriever_ready = False
 
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
 
 # --------------------------------------------------
 # Navigation
@@ -107,26 +109,45 @@ elif page == "chat":
         st.warning("Please ingest documents first.")
         st.stop()
 
+    # 1️⃣ Render existing chat history first
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+
+    # 2️⃣ Chat input
     user_query = st.chat_input("Ask a question...")
 
     if user_query:
-        response = requests.post(
-            f"{BACKEND_URL}/chat",
-            json={"query": user_query,"chat_history":st.session_state.chat_history},
-            timeout=60
-        )
-
-        if response.status_code == 200:
-            ai_answer = response.json()["response"]
-            st.session_state.chat_history.append({
-                "user": user_query,
-                "ai": ai_answer
-            })
-        else:
-            st.error("Backend error.")
-
-    for chat in st.session_state.chat_history:
+        # ---- USER MESSAGE (instant render) ----
         with st.chat_message("user"):
-            st.write(chat["user"])
+            st.write(user_query)
+
+        st.session_state.chat_history.append({
+            "role": "user",
+            "content": user_query
+        })
+
+        # ---- ASSISTANT PLACEHOLDER ----
         with st.chat_message("assistant"):
-            st.write(chat["ai"])
+            response_placeholder = st.empty()
+            with st.spinner("Thinking..."):
+                response = requests.post(
+                    f"{BACKEND_URL}/chat",
+                    json={
+                        "session_id": st.session_state.session_id,
+                        "query": user_query
+                    },
+                    timeout=120
+                )
+
+            if response.status_code == 200:
+                ai_answer = response.json()["response"]
+                response_placeholder.write(ai_answer)
+
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": ai_answer
+                })
+            else:
+                response_placeholder.error("Backend error")
+
