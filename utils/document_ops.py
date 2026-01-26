@@ -43,7 +43,8 @@ def save_uploaded_file(uploaded_file, target_path: str) -> str:
                 raise CustomException(f"Unsupported file extension: {ext}. Supported extensions are: {SUPPORTED_EXTENSIONS}")
             # Clean file name (only alphanum, dash, underscore)
             safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', Path(name).stem).lower()
-            fname = f"{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
+            #fname = f"{safe_name}_{uuid.uuid4().hex[:6]}{ext}"
+            fname = f"{safe_name}{ext}"
             out = target_path / fname
             with open(out, "wb") as f:
                 f.write(file_bytes)

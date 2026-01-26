@@ -31,9 +31,10 @@ class FaissManager:
     @staticmethod
     def _deduplicate(texts:str,md:Dict[str,Any]):
         src=md.get("source") or md.get("file_path")
-        row_id=md.get("row_id")
+        page=md.get("page")
+        id=md.get("chunk_id")
         if src is not None:
-            return f"{src}::{row_id if row_id is not None else ''}"
+            return f"{src}::{page if page is not None else ''}::{id if id is not None else ''}"
         return hashlib.sha256(texts.encode("utf-8")).hexdigest()
     
     def _save_meta(self):
@@ -55,7 +56,7 @@ class FaissManager:
         for doc in documents:
             key = self._deduplicate(doc.page_content, doc.metadata)
             if key not in self._meta["rows"]:
-                self._meta["rows"][key] = doc.metadata
+                self._meta["rows"][key] = True
         self._save_meta()
         self.vectorestore.save_local(str(self.index_dir))
         return self.vectorestore
@@ -71,7 +72,7 @@ class FaissManager:
             if key in self._meta["rows"]:
                 log.info(f"Skipping duplicate document with key: {key}")
                 continue
-            self._meta["rows"][key]=doc.metadata
+            self._meta["rows"][key]=True
             new_docs.append(doc)
         if new_docs:
             self.vectorestore.add_documents(new_docs)
@@ -83,7 +84,8 @@ class DataIngestion:
     def __init__(self):
         self.session_id = generate_session_id()
         self.session_path = get_project_root() / "data" / self.session_id
-        self.uploads_path = self.session_path / "uploads"
+        #self.uploads_path = self.session_path / "uploads"
+        self.uploads_path = get_project_root() / "data" / "uploads"
         self.loaded_docs_path = self.session_path / "loaded_docs"
 
     def chunk_and_store(self,documents,chunk_size,chunk_overlap):
@@ -95,6 +97,9 @@ class DataIngestion:
                 chunk_overlap=chunk_overlap,
             )
             chunks = text_splitter.split_documents(documents)
+            #adding chunk id to metadata for each chunk
+            for i, chunk in enumerate(chunks):
+                chunk.metadata["chunk_id"] = i
             #saving chunked docs in local
             os.makedirs(chunked_docs_path, exist_ok=True)
             with open(chunked_docs_path / "chunked_docs.txt", "w", encoding="utf-8") as f:
